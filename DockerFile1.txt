@@ -1,0 +1,13 @@
+FROM ubuntu:latest
+RUN apt-get update && \
+  apt-get -y install software-properties-common && \
+  apt-add-repository -y ppa:ansible/ansible && \
+  apt-get update && \
+  apt-get -y upgrade && \
+  apt-get install -y git curl ansible && \
+  mkdir /opt/myAnsible && \
+  cd /opt/myAnsible
+COPY test1.yml /opt/myAnsible/test1.yml
+WORKDIR /opt/myAnsible
+RUN ls -l
+CMD ["/bin/bash"]

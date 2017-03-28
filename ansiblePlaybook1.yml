@@ -1,0 +1,7 @@
+---
+- hosts: localhost
+  tasks:
+    - name: create ubuntu container
+      command: sudo docker build -f ./DockerFile1 -t bp_ubuntu_docker_container1 .
+      register: docker
+    - debug: var=docker.stdout
