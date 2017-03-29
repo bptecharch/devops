@@ -2,6 +2,6 @@
 - hosts: localhost
   tasks:
     - name: hello world
-      command: docker build -f ./DockerFile2 -t docker-whale .
+      command: docker build -f ./DockerFile2 -t docker-2 .
       register: docker
     - debug: var=docker.stdout
