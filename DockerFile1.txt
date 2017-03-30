@@ -7,7 +7,7 @@ RUN apt-get update && \
   apt-get install -y git curl ansible && \
   mkdir /opt/myAnsible && \
   cd /opt/myAnsible
-COPY test1.yml /opt/myAnsible/test1.yml
+COPY test.yml /opt/myAnsible/test.yml
 WORKDIR /opt/myAnsible
 RUN ls -l
 CMD ["/bin/bash"]
