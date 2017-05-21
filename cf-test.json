@@ -1,0 +1,27 @@
+{
+	"AWSTemplateFormatVersion" : "2010-09-09",
+	"Parameters" : {
+		"p1" : {
+			"Type" : "String",
+			"Description" : "Param1"
+		},
+		"p2" : {
+			"Type" : "String",
+			"Description" : "Param2"
+		}
+	},
+	"Resources" : {
+		"EC2Instance" : {
+      "Type" : "AWS::EC2::Instance",
+        "Properties" : {
+          "InstanceType" : { "Ref" : "p1" },
+          "SecurityGroupIds" : [{ "Ref" : "p1" }],
+          "SubnetId" : { "Ref" : "p1" },
+          "KeyName" : { "Ref" : "p1" },
+          "ImageId" : { "Ref" : "p1" },
+          "Tags" : [ {"Key" : "Name", "Value" : "Migration-Srv" } ],
+          "IamInstanceProfile" : { "Ref" : "p1" }
+        }
+    }
+	}
+}
