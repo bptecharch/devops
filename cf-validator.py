@@ -53,7 +53,7 @@ def validate_cf_template(cf_template):
     '''
 
     try:
-        client = boto3.client('cloudformation', region_name='us-east-1')
+        client = boto3.client('cloudformation')
         response = client.validate_template(TemplateBody=cf_template)
         if 'Capabilities' in response:
             print(response['Capabilities'],"=>>", response['CapabilitiesReason'])
