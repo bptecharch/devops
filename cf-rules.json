@@ -1,8 +1,8 @@
 {
-  "valid_root_keys" : ["AWSTemplateFormatVersion","Parameters","Resources","Outputs"],
-  "valid_parameters" : ["p1","p2"],
-  "valid_resources" : ["EC2::Instance"],
+  "allow_root_keys" : [],
+  "allow_parameters" : ["p1","p2"],
+  "allow_resources" : ["EC2::Instance"],
   "require_ref_attributes" : {"EC2::Instance" : ["InstanceType","ImageId","SecurityGroupIds","SubnetId"]},
-  "allow_additional_attributes" : {"EC2::Instance" : ["KeyName","IamInstanceProfile","Tags"]},
-  "banned_attributes" : {}
+  "allow_additional_attributes" : {},
+  "not_allow_attributes" : {}
 }

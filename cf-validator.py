@@ -18,23 +18,14 @@ def get_configuration(rules_file):
     cf_rules = f.read()
     j_rules = json.loads(cf_rules)
 
-    valid_root_keys = j_rules["valid_root_keys"]
-    valid_parameters = j_rules["valid_parameters"]
-    valid_resources = j_rules["valid_resources"]
+    allow_root_keys = j_rules["allow_root_keys"]
+    allow_parameters = j_rules["allow_parameters"]
+    allow_resources = j_rules["allow_resources"]
     require_ref_attributes = j_rules["require_ref_attributes"]
     allow_additional_attributes = j_rules["allow_additional_attributes"]
-    banned_attributes = j_rules["banned_attributes"]
+    not_allow_attributes = j_rules["not_allow_attributes"]
 
-    #valid_root_keys = ['AWSTemplateFormatVersion','Parameters','Resources','Outputs']
-    #valid_parameters = ['p1','p2']
-    #valid_resources = ['EC2::Instance']
-    #require_ref_attributes = {'EC2::Instance' : ['InstanceType','ImageId','SecurityGroupIds','SubnetId']}
-    #require_ref_attributes = {}
-    #allow_additional_attributes = {'EC2::Instance' : ['KeyName','IamInstanceProfile','Tags']}
-    #allow_additional_attributes = {}
-    #banned_attributes = {'EC2::Instance' :['KeyName']}
-    #banned_attributes = {}
-    return valid_root_keys, valid_parameters, valid_resources, require_ref_attributes, allow_additional_attributes, banned_attributes
+    return allow_root_keys, allow_parameters, allow_resources, require_ref_attributes, allow_additional_attributes, not_allow_attributes
 
 def get_template(template_file):
 
@@ -117,7 +108,7 @@ def validate_resources(cf_resources, valid_resources):
 
     return is_valid
 
-def validate_attributes(cf_resources, require_ref_attributes, allow_additional_attributes, banned_attributes):
+def validate_attributes(cf_resources, require_ref_attributes, allow_additional_attributes, not_allow_attributes):
 
     '''
         Validate attributes of resources in CF template
@@ -127,34 +118,37 @@ def validate_attributes(cf_resources, require_ref_attributes, allow_additional_a
         rs_type = rs["Type"].replace('AWS::','')
         ref_attr = []
         add_attr = []
-        ban_attr = []
+        not_attr = []
         if rs_type in require_ref_attributes:
             ref_attr = require_ref_attributes[rs_type]
         if rs_type in allow_additional_attributes:
             add_attr = allow_additional_attributes[rs_type]
-        if rs_type in banned_attributes:
-            ban_attr = banned_attributes[rs_type]
+        if rs_type in not_allow_attributes:
+            not_attr = not_allow_attributes[rs_type]
 
-        if (ref_attr) or (add_attr) or (ban_attr):
+        if (ref_attr) or (add_attr) or (not_attr):
             for atr_key in rs["Properties"].keys():
-                if atr_key in ban_attr:
-                    print('Banned Attribue')
+                if atr_key in not_attr:
+                    print('Not Allow Attribute: ', atr_key)
                     return False
                 elif atr_key in ref_attr:
                     atr_val = rs["Properties"][atr_key]
                     if isinstance(atr_val, dict) and atr_val.keys()[0] not in 'Ref':
-                        print('Not Refference')
+                        print('Not Refference Attribute: ',atr_key)
                         return False
                     elif isinstance(atr_val, list):
                         for o in atr_val:
                             if not isinstance(o, dict):
-                                print('Not Refference - too nested')
+                                print('Not Refference - too nested: ', atr_key)
                                 return False
                             elif o.keys()[0] not in 'Ref':
-                                print('Not Refference - sub value')
+                                print('Not Refference - sub value:', atr_key)
                                 return False
+                    elif (not isinstance(atr_val, dict)) and (not isinstance(atr_val, list)):
+                        print('Not Refference Attribute: ',atr_key)
+                        return False
                 elif add_attr and atr_key not in add_attr:
-                    print('Not in allow attributes')
+                    print('Not Allow attribute: ',atr_key)
                     return False
 
     return True
@@ -213,23 +207,26 @@ def main(arguments):
     args = parser.parse_args(arguments)
 
     cf_template = get_template(args.cf_path)
-    j_cf = json.loads(cf_template)
+    try:
+        j_cf = json.loads(cf_template)
+    except:
+        sys.exit("CF Template - not valid json format")
 
     if not validate_cf_template(cf_template):
         sys.exit("CF Template not valid")
 
-    valid_root_keys, valid_parameters, valid_resources, require_ref_attributes, allow_additional_attributes, banned_attributes = get_configuration(args.cf_rules)
+    allow_root_keys, allow_parameters, allow_resources, require_ref_attributes, allow_additional_attributes, not_allow_attributes = get_configuration(args.cf_rules)
 
-    if not validate_root_keys(j_cf.keys(),valid_root_keys):
-        sys.exit("Root Keys are not valid")
+    if not validate_root_keys(j_cf.keys(),allow_root_keys):
+        sys.exit("Root Tags are not valid")
 
-    if not validate_parameters(j_cf["Parameters"].keys(),valid_parameters):
+    if not validate_parameters(j_cf["Parameters"].keys(),allow_parameters):
         sys.exit("Parameters are not valid")
 
-    if not validate_resources(j_cf["Resources"],valid_resources):
+    if not validate_resources(j_cf["Resources"],allow_resources):
         sys.exit("Resources are not valid")
 
-    if not validate_attributes(j_cf["Resources"],require_ref_attributes, allow_additional_attributes, banned_attributes):
+    if not validate_attributes(j_cf["Resources"],require_ref_attributes, allow_additional_attributes, not_allow_attributes):
         sys.exit("Require Resources are not valid")
 
     if args.cf_res:
